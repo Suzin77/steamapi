@@ -1,0 +1,4 @@
+Do wykonania.
+
+Wydzielić polaczenia ze STEAM_API do osobnej klasy gdzie będą metody do inicjacji polaczenia i zamykanai, tak aby wykonywać zapytania
+na jadym polaczeniu.
