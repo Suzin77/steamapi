@@ -23,7 +23,6 @@ require_once "steamkey.php";
        curl_close ($ch);
        return $data;
      }  
-
   }
 
 
@@ -33,7 +32,6 @@ function getSteamGames ($steam_user_id){
  	$get_games ="http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=".$api_key."&format=json&input_json={\"steamid\":".$steam_user_id.",\"include_appinfo\":true,\"include_played_free_games\":false}"; 	
  	
  	$user_game = steamConnect($get_games);
-   
  }
 
 
@@ -51,7 +49,6 @@ function getFriendList ($steam_user_id){
 	$friend_list = "http://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key=".$api_key."&steamid=".$steam_user_id."&relationship=friend";
 	$user_data = steamConnect($friend_list);	
 	return $user_data;
-
 }
 
 
@@ -114,10 +111,10 @@ if (isset($_GET['action'])&& ($_GET['action']=="search")){
         foreach ($lista_lista as $row => $m){
         	$friend_since    = $lista_lista[$row]['friend_since'];
         	$friend_steam_id = $lista_lista[$row]['steamid'];
-        	$friend_data = getUserInfo($friend_steam_id);
-        	$friend_table .= "<tr>
-        						<td>".$friend_data['response']['players'][0]['personaname']."</td>
-        						<td>".$friend_steam_id."</td>
+        	$friend_data     = getUserInfo($friend_steam_id);
+        	$friend_table   .= "<tr>
+        				<td>".$friend_data['response']['players'][0]['personaname']."</td>
+        				<td>".$friend_steam_id."</td>
 	                            <td>".date('Y.m.d', $friend_since)."</td>	                            
         					  </tr>";	
         }
