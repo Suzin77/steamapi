@@ -131,10 +131,7 @@ if (isset($_GET['action'])&& ($_GET['action']=="search")){
         <p>Lista z poza bloku $friend_table</p> 
 _END;
 
-        foreach ($lista_lista as $fr =>$p){
-	       $friend_since = $lista_lista[$fr]['friend_since'];
-	       echo "<p> Steam ID of friend: ".$lista_lista[$fr]['steamid']
-	       ." friends since: ".date('Y.m.d', $friend_since)."</p>";
+        
          }
        }
        else{echo "Podano nieprawidlowy ID";}  
