@@ -23,22 +23,22 @@ require_once "steamkey.php";
        curl_close ($ch);
        return $data;
      }  
+
   }
 
 
 function getSteamGames ($steam_user_id){
-
  	global $api_key;
- 	$get_games ="http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=".$api_key."&format=json&input_json={\"steamid\":".$steam_user_id.",\"include_appinfo\":true,\"include_played_free_games\":false}"; 	
- 	
- 	$user_game = steamConnect($get_games);
+ 	$get_games ="http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=".$api_key."&format=json&input_json={\"steamid\":".$steam_user_id.",\"include_appinfo\":true,\"include_played_free_games\":false}"; 
+ 	$get_games2 = "http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=".$api_key."&steamids=".$steam_user_id;
+ 	$get_games3= "http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=".$api_key."&format=json&input_json={\"steamid\":76561198014765204,\"include_appinfo\":true,\"include_played_free_games\":false}";	 	
+ 	$game_data = steamConnect($get_games);
+ 	return $game_data;   
  }
 
-
 function getUserInfo ($steam_user_id){
-	global $api_key;
+    global $api_key;
 	$user_info_request = "http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=".$api_key."&steamids=".$steam_user_id."&format=json";
-
 	$user_info = steamConnect($user_info_request);	
 	return $user_info;  
 }
@@ -53,6 +53,60 @@ function getFriendList ($steam_user_id){
 
 
 function getFriendsListView(){}
+
+function createGamesListView($steam_user_id){
+	$games_list = getSteamGames($steam_user_id);
+
+	
+	$response_games = $games_list['response']['games'];
+	
+    $appid = $response_games[0]['appid'];
+    $game_name = $games_list['response']['games'][0]['name'];
+	$img_logo_url = $games_list['response']['games'][0]['img_logo_url'];
+	$img_icon_url = $games_list['response']['games'][0]['img_icon_url'];
+	$playtime_forever = $games_list['response']['games'][0]['playtime_forever'];
+
+	/* 'appid' => 220,
+        'name' => 'Half-Life 2',
+        'playtime_forever' => 555,
+        'img_icon_url' => 'fcfb366051782b8ebf2aa297f3b746395858cb62',
+        'img_logo_url' => 'e4ad9cf1b7dc8475c1118625daf9abd4bdcbcad0',
+        'has_community_visible_stats' => true,
+
+        $iconUrl ="http://media.steampowered.com/steamcommunity/public/images/apps/".$gameList[$key]['appid']."/".$gameList[$key]['img_logo_url'].".jpg";
+        echo "<img src=\"".$iconUrl."\" style=\"padding:4px\">";
+	*/
+	  
+	    
+        $lista_lista_gry  = $games_list['response']['games'];
+
+	$game_table ="<table class=\"game_table\">
+        			   <tr>
+        			   	  <th> L. p.</th>
+        				  <th> Game Name</th> 
+        				  <th> Steam Game ID </th>
+        				  <th> Game logo </th>";
+
+        $friend_steam_id ="";
+
+
+        foreach ($response_games as $key => $n){
+        	$lp = $key +1;
+        	$steam_app_id    = $response_games[$key]['appid'];
+        	$steam_app_name  = $response_games[$key]['name'];
+        	$steam_app_logo = $response_games[$key]['img_logo_url'];
+        	$steam_app_logo_url = "http://media.steampowered.com/steamcommunity/public/images/apps/".$steam_app_id."/".$steam_app_logo.".jpg"; 
+        	
+        	$game_table .= "<tr>
+        						<td>".$lp."</td>
+        						<td>".$steam_app_name."</td>
+        						<td>".$steam_app_id."</td>
+	                            <td><img src=\"".$steam_app_logo_url."\" style=\"padding:4px\"/></td>	                            
+        					  </tr>";	
+        }
+        $game_table .="</table>";
+        return $game_table;
+}
 
 ?>
 <!DOCTYPE html>
@@ -86,7 +140,9 @@ if (isset($_GET['action'])&& ($_GET['action']=="search")){
 	if($_POST['user_appid']!=""){	 
 	  $user_info = getUserInfo($_POST['user_appid']);	  
 	  if (isset($user_info['response']['players'][0])){	  	  
-	    getSteamGames($_POST['user_appid']);
+	    $steam_game_list = getSteamGames($_POST['user_appid']);
+	    
+
 	    $steam_friend_list = getFriendList($_POST['user_appid']);
 
 	    $personaname  = $user_info['response']['players'][0]['personaname'];
@@ -94,10 +150,10 @@ if (isset($_GET['action'])&& ($_GET['action']=="search")){
         $lastlogoff   = $user_info['response']['players'][0]['lastlogoff'];
         $avatarmedium = $user_info['response']['players'][0]['avatarmedium'];
         $timecreated  = $user_info['response']['players'][0]['timecreated'];
-        $create_date  =  date('Y.m.d', $timecreated);
+        $create_date  = date('Y.m.d', $timecreated);
 	  
-	    $friends_id = $steam_friend_list['friendslist']['friends'][0]['steamid'];
-        $lista_lista = $steam_friend_list['friendslist']['friends'];
+	    $friends_id   = $steam_friend_list['friendslist']['friends'][0]['steamid'];
+        $lista_lista  = $steam_friend_list['friendslist']['friends'];
 
         $friend_table ="<table class=\"friend_table\">
         				<tr>
@@ -111,15 +167,17 @@ if (isset($_GET['action'])&& ($_GET['action']=="search")){
         foreach ($lista_lista as $row => $m){
         	$friend_since    = $lista_lista[$row]['friend_since'];
         	$friend_steam_id = $lista_lista[$row]['steamid'];
-        	$friend_data     = getUserInfo($friend_steam_id);
-        	$friend_table   .= "<tr>
-        				<td>".$friend_data['response']['players'][0]['personaname']."</td>
-        				<td>".$friend_steam_id."</td>
+        	$friend_data = getUserInfo($friend_steam_id);
+        	$friend_table .= "<tr>
+        						<td>".$friend_data['response']['players'][0]['personaname']."</td>
+        						<td>".$friend_steam_id."</td>
 	                            <td>".date('Y.m.d', $friend_since)."</td>	                            
         					  </tr>";	
         }
         $friend_table .="</table>";
 
+        $steam_user_games = createGamesListView($_POST['user_appid']);
+        my_var_dump($steam_user_games);
         echo <<<_END
         <div class ="user_info_wrapper">
         <h4>Informacje o użytkowniku</h4>
@@ -128,11 +186,13 @@ if (isset($_GET['action'])&& ($_GET['action']=="search")){
         <p>Steam ID: $steamid </p>
         <p>On Steam since: $create_date</p>
         <p>Znajomi:</p>
-        <p>Lista z poza bloku $friend_table</p> 
-_END;
-
+        $friend_table
+        <p>Lista gier</p>
         
-         }
+         
+_END;
+      
+         
        }
        else{echo "Podano nieprawidlowy ID";}  
       }
