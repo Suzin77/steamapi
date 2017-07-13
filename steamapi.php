@@ -31,7 +31,7 @@ function getSteamGames ($steam_user_id){
  	global $api_key;
  	$get_games ="http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=".$api_key."&format=json&input_json={\"steamid\":".$steam_user_id.",\"include_appinfo\":true,\"include_played_free_games\":false}"; 
  	$get_games2 = "http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=".$api_key."&steamids=".$steam_user_id;
- 	$get_games3= "http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=".$api_key."&format=json&input_json={\"steamid\":76561198014765204,\"include_appinfo\":true,\"include_played_free_games\":false}";	 	
+ 		 	
  	$game_data = steamConnect($get_games);
  	return $game_data;   
  }
