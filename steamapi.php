@@ -1,5 +1,6 @@
 <?php
 require_once "steamkey.php";
+//require_once "steam_class.php";
 
  function my_var_dump($var){
 
@@ -20,7 +21,7 @@ require_once "steamkey.php";
      } 
      else{	
        $data = json_decode($output,true);
-       curl_close ($ch);
+       curl_close ($ch);      
        return $data;
      }  
 
@@ -28,25 +29,25 @@ require_once "steamkey.php";
 
 
 function getSteamGames ($steam_user_id){
- 	global $api_key;
- 	$get_games ="http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=".$api_key."&format=json&input_json={\"steamid\":".$steam_user_id.",\"include_appinfo\":true,\"include_played_free_games\":false}"; 
- 	$get_games2 = "http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=".$api_key."&steamids=".$steam_user_id;
+ 	global $steam_api_key;
+ 	$get_games ="http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=".$steam_api_key."&format=json&input_json={\"steamid\":".$steam_user_id.",\"include_appinfo\":true,\"include_played_free_games\":false}"; 
+ 	$get_games2 = "http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=".$steam_api_key."&steamids=".$steam_user_id;
  		 	
  	$game_data = steamConnect($get_games);
  	return $game_data;   
  }
 
 function getUserInfo ($steam_user_id){
-    global $api_key;
-	$user_info_request = "http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=".$api_key."&steamids=".$steam_user_id."&format=json";
-	$user_info = steamConnect($user_info_request);	
+    global $steam_api_key;
+	$user_info_request = "http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=".$steam_api_key."&steamids=".$steam_user_id."&format=json";
+	$user_info = steamConnect($user_info_request);		
 	return $user_info;  
 }
 
 
 function getFriendList ($steam_user_id){
-	global $api_key;
-	$friend_list = "http://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key=".$api_key."&steamid=".$steam_user_id."&relationship=friend";
+	global $steam_api_key;
+	$friend_list = "http://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key=".$steam_api_key."&steamid=".$steam_user_id."&relationship=friend";
 	$user_data = steamConnect($friend_list);	
 	return $user_data;
 }
@@ -78,31 +79,32 @@ function createGamesListView($steam_user_id){
 	*/
 	  
 	    
-        $lista_lista_gry  = $games_list['response']['games'];
-
-	$game_table ="<table class=\"game_table\">
+    $lista_lista_gry  = $games_list['response']['games'];
+	$game_table ="<table class=\"table\">
+				    <thead class=\"thead-inverse\">
         			   <tr>
         			   	  <th> L. p.</th>
         				  <th> Game Name</th> 
         				  <th> Steam Game ID </th>
-        				  <th> Game logo </th>";
+        				  <th> Game logo </th>
+        			   </tr>
+        			</thead>";
 
-        $friend_steam_id ="";
-
-
-        foreach ($response_games as $key => $n){
-        	$lp = $key +1;
-        	$steam_app_id    = $response_games[$key]['appid'];
-        	$steam_app_name  = $response_games[$key]['name'];
-        	$steam_app_logo = $response_games[$key]['img_logo_url'];
-        	$steam_app_logo_url = "http://media.steampowered.com/steamcommunity/public/images/apps/".$steam_app_id."/".$steam_app_logo.".jpg"; 
-        	
-        	$game_table .= "<tr>
-        						<td>".$lp."</td>
-        						<td>".$steam_app_name."</td>
-        						<td>".$steam_app_id."</td>
-	                            <td><img src=\"".$steam_app_logo_url."\" style=\"padding:4px\"/></td>	                            
-        					  </tr>";	
+    $friend_steam_id ="";
+    foreach ($response_games as $key => $n){
+    	$lp = $key +1;        	
+    	$steam_app_id    = $response_games[$key]['appid'];
+    	$steam_app_shop_url = "http://store.steampowered.com/app/".$steam_app_id;
+    	$steam_app_name  = $response_games[$key]['name'];
+    	$steam_app_logo = $response_games[$key]['img_logo_url'];
+    	$steam_app_logo_url = "http://media.steampowered.com/steamcommunity/public/images/apps/".$steam_app_id."/".$steam_app_logo.".jpg";     	
+    	$game_table .= "<tr>
+    						<td>".$lp."</td>
+    						<td>".$steam_app_name."</td>
+    						<td>".$steam_app_id."</td>
+                            <td><img src=\"".$steam_app_logo_url."\" style=\"padding:2px 4px\"/></td>
+                            <td><a href = \"".$steam_app_shop_url."\" target=\"_blank\">Link do strony</a></td>	                            
+    					  </tr>";	
         }
         $game_table .="</table>";
         return $game_table;
@@ -114,6 +116,7 @@ function createGamesListView($steam_user_id){
 <head>
 	<title>STEAM</title>
 	<link href="css/steamapi.css" type="text/css" rel="stylesheet" />
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
 </head>
 <body>
 <h1> Skypt wyświetla informacje o uzytkowniku usługi STEAM.</h1>
@@ -194,7 +197,7 @@ _END;
       
          
        }
-       else{echo "Podano nieprawidlowy ID";}  
+       else{echo "Podano nieprawidlowy ID"; my_var_dump($user_info); my_var_dump($_POST); }  
       }
     else {echo "nie podano ID usera, prosze uzupelnic ";}
 } 
