@@ -57,7 +57,6 @@ function getFriendsListView(){}
 
 function createGamesListView($steam_user_id){
 	$games_list = getSteamGames($steam_user_id);
-
 	
 	$response_games = $games_list['response']['games'];
 	
@@ -65,20 +64,7 @@ function createGamesListView($steam_user_id){
     $game_name = $games_list['response']['games'][0]['name'];
 	$img_logo_url = $games_list['response']['games'][0]['img_logo_url'];
 	$img_icon_url = $games_list['response']['games'][0]['img_icon_url'];
-	$playtime_forever = $games_list['response']['games'][0]['playtime_forever'];
-
-	/* 'appid' => 220,
-        'name' => 'Half-Life 2',
-        'playtime_forever' => 555,
-        'img_icon_url' => 'fcfb366051782b8ebf2aa297f3b746395858cb62',
-        'img_logo_url' => 'e4ad9cf1b7dc8475c1118625daf9abd4bdcbcad0',
-        'has_community_visible_stats' => true,
-
-        $iconUrl ="http://media.steampowered.com/steamcommunity/public/images/apps/".$gameList[$key]['appid']."/".$gameList[$key]['img_logo_url'].".jpg";
-        echo "<img src=\"".$iconUrl."\" style=\"padding:4px\">";
-	*/
-	  
-	    
+	$playtime_forever = $games_list['response']['games'][0]['playtime_forever'];    
     $lista_lista_gry  = $games_list['response']['games'];
 	$game_table ="<table class=\"table\">
 				    <thead class=\"thead-inverse\">
@@ -87,6 +73,7 @@ function createGamesListView($steam_user_id){
         				  <th> Game Name</th> 
         				  <th> Steam Game ID </th>
         				  <th> Game logo </th>
+        				  <th> Cena </th>
         			   </tr>
         			</thead>";
 
@@ -102,13 +89,14 @@ function createGamesListView($steam_user_id){
     						<td>".$lp."</td>
     						<td>".$steam_app_name."</td>
     						<td>".$steam_app_id."</td>
-                            <td><img src=\"".$steam_app_logo_url."\" style=\"padding:2px 4px\"/></td>
+                            <td><img src=\"".$steam_app_logo_url."\" style=\"padding:1px\"/></td>
                             <td><a href = \"".$steam_app_shop_url."\" target=\"_blank\">Link do strony</a></td>	                            
     					  </tr>";	
         }
         $game_table .="</table>";
         return $game_table;
 }
+//end of createGamesListView
 
 ?>
 <!DOCTYPE html>
@@ -119,7 +107,7 @@ function createGamesListView($steam_user_id){
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
 </head>
 <body>
-<h1> Skypt wyświetla informacje o uzytkowniku usługi STEAM.</h1>
+<h1> Skrypt wyświetla informacje o uzytkowniku usługi STEAM.</h1>
   <p>Przydatne linki</p>
   <p><a href="http://serwer1725317.home.pl/jakiemetody.php" target="_blank">Lista metod</a></p>
   <p>przykaladowe ID 76561198014765204, 76561197970373921, 76561198002500907, 76561198008991804, 76561198018826719</p>	
@@ -127,6 +115,14 @@ function createGamesListView($steam_user_id){
 	  <label>Please enter Steam user APP ID  </label><input type="text" name="user_appid"/>
 	    <input type="submit" name="search" value="szukaj"/>
 	</form>
+	<form action="?action=export" method="POST">
+	  <input type="submit" name="export" value="export do csv"/>
+	  <a href="#" class="btn btn-primary btn-primary"><span class="glyphicon glyphicon-floppy-disk"></span> Default text here</a>
+	  
+	</form>  
+	<button type="button" class="btn btn-default btn-lg">
+  <span class="glyphicon glyphicon-star" aria-hidden="true"></span> Star
+</button>
 	    
 <?php
 
@@ -143,9 +139,7 @@ if (isset($_GET['action'])&& ($_GET['action']=="search")){
 	if($_POST['user_appid']!=""){	 
 	  $user_info = getUserInfo($_POST['user_appid']);	  
 	  if (isset($user_info['response']['players'][0])){	  	  
-	    $steam_game_list = getSteamGames($_POST['user_appid']);
-	    
-
+	    $steam_game_list = getSteamGames($_POST['user_appid']);	    
 	    $steam_friend_list = getFriendList($_POST['user_appid']);
 
 	    $personaname  = $user_info['response']['players'][0]['personaname'];
@@ -158,11 +152,14 @@ if (isset($_GET['action'])&& ($_GET['action']=="search")){
 	    $friends_id   = $steam_friend_list['friendslist']['friends'][0]['steamid'];
         $lista_lista  = $steam_friend_list['friendslist']['friends'];
 
-        $friend_table ="<table class=\"friend_table\">
-        				<tr>
-        					<th> Nick znajomego </th> 
-        					<th> Steam ID znajomego</th>
-        					<th> Data rozpoczecia znajmości</th>";
+        $friend_table ="<table class=\"table\">
+        				  <thead class=\"thead-inverse\">
+        				   <tr>
+        					 <th> Nick znajomego </th> 
+        					 <th> Steam ID znajomego</th>
+        					 <th> Data rozpoczecia znajmości</th>
+        				    </tr>
+        				   </thead>";
 
         $friend_steam_id ="";
 
@@ -179,8 +176,47 @@ if (isset($_GET['action'])&& ($_GET['action']=="search")){
         }
         $friend_table .="</table>";
 
-        $steam_user_games = createGamesListView($_POST['user_appid']);
-        my_var_dump($steam_user_games);
+        // dodajemy eksport do pliku.
+       
+
+$list = $steam_game_list['response']['games'];
+$fp = fopen('file.csv', 'w');
+
+foreach ($list as $fields) {
+    fputcsv($fp, $fields, ";");
+}
+
+fclose($fp);
+// zapis gier do pliku 
+$headers_list = $steam_game_list['response']['games'][0];
+
+$first_line = array_keys($headers_list);
+my_var_dump($first_line);
+
+// dodajemy naglowki
+$headersFile = fopen('proba.csv','w');
+fputcsv($headersFile,$first_line, ";");
+//doajemy tabele
+$list = $steam_game_list['response']['games'];
+//$fp = fopen('proba.csv', 'w');
+
+foreach ($list as $fields) {
+    fputcsv($headersFile, $fields, ";");
+}
+
+fclose($headersFile);
+
+        $steam_user_games = createGamesListView($_POST['user_appid']); 
+
+if (isset($_GET['file'])) {
+  //writecsv();
+    // Wszystko co w tym bloku zostanie wyswietlone zostanie zapisane do pliku
+    header('Content-Disposition: attachment; filename="abc.csv"');                              
+    readfile('proba.csv');
+} else {
+   $tekst = "Funkcja zapisuje tablice do pliku file.csv na serwerze.\n Plik ma taka zawartosc jak trzeba.\n
+     <a href=\"?file=1\">Link</a>";
+}        
         echo <<<_END
         <div class ="user_info_wrapper">
         <h4>Informacje o użytkowniku</h4>
@@ -188,16 +224,20 @@ if (isset($_GET['action'])&& ($_GET['action']=="search")){
         <p>Name: $personaname</p>
         <p>Steam ID: $steamid </p>
         <p>On Steam since: $create_date</p>
+        <p>Lista gier w CSV <a href="http://serwer1725317.home.pl/proba.csv" target="_blank">pobierz</a></p>
+        <a href="http://serwer1725317.home.pl/proba.csv" target="_blank">pobierz</a>
+
+        <a href="?file=1">Link</a>
         <p>Znajomi:</p>
         $friend_table
         <p>Lista gier</p>
-        
+        $steam_user_games
          
 _END;
       
          
        }
-       else{echo "Podano nieprawidlowy ID"; my_var_dump($user_info); my_var_dump($_POST); }  
+       else{echo "Podano nieprawidlowy ID";}  
       }
     else {echo "nie podano ID usera, prosze uzupelnic ";}
 } 
