@@ -1,19 +1,12 @@
 <?php
 require_once "steamkey.php";
-//require_once "steam_class.php";
-
- function my_var_dump($var){
-
-  	echo "<pre>".var_export($var,true)."</pre>";
-  }
-
+require_once "steam_class.php";
 
  function steamConnect ($url){
 
   	$ch = curl_init();
     curl_setopt($ch, CURLOPT_URL,$url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
     $output = curl_exec($ch);
      if ($output === false)
      { 
@@ -24,23 +17,21 @@ require_once "steamkey.php";
        curl_close ($ch);      
        return $data;
      }  
-
   }
 
 
 function getSteamGames ($steam_user_id){
  	global $steam_api_key;
  	$get_games ="http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=".$steam_api_key."&format=json&input_json={\"steamid\":".$steam_user_id.",\"include_appinfo\":true,\"include_played_free_games\":false}"; 
- 	$get_games2 = "http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=".$steam_api_key."&steamids=".$steam_user_id;
- 		 	
+ 	$get_games2 = "http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=".$steam_api_key."&steamids=".$steam_user_id; 		 	
  	$game_data = steamConnect($get_games);
  	return $game_data;   
  }
 
 function getUserInfo ($steam_user_id){
     global $steam_api_key;
-	$user_info_request = "http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=".$steam_api_key."&steamids=".$steam_user_id."&format=json";
-	$user_info = steamConnect($user_info_request);		
+	$userInfoRequest = "http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=".$steam_api_key."&steamids=".$steam_user_id."&format=json";
+	$user_info = steamConnect($userInfoRequest);		
 	return $user_info;  
 }
 
@@ -52,6 +43,20 @@ function getFriendList ($steam_user_id){
 	return $user_data;
 }
 
+function getGameListCsv ($gamesList){
+// zapis gier do pliku 
+$headers_list = $gamesList['response']['games'][0];
+$first_line = array_keys($headers_list);
+
+$gamesFile = fopen('games.csv','w');
+fputcsv($gamesFile,$first_line, ";");
+//doajemy tabele
+$list = $gamesList['response']['games'];
+foreach ($list as $fields) {
+    fputcsv($gamesFile, $fields, ";");
+}
+fclose($gamesFile);
+}
 
 function getFriendsListView(){}
 
@@ -111,7 +116,7 @@ function createGamesListView($steam_user_id){
   <p>Przydatne linki</p>
   <p><a href="http://serwer1725317.home.pl/jakiemetody.php" target="_blank">Lista metod</a></p>
   <p>przykaladowe ID 76561198014765204, 76561197970373921, 76561198002500907, 76561198008991804, 76561198018826719</p>	
-	<form action="?action=search" method="POST">
+	<form action="steamapi.php" method="POST">
 	  <label>Please enter Steam user APP ID  </label><input type="text" name="user_appid"/>
 	    <input type="submit" name="search" value="szukaj"/>
 	</form>
@@ -135,22 +140,32 @@ function createGamesListView($steam_user_id){
 *
  */
 
-if (isset($_GET['action'])&& ($_GET['action']=="search")){
-	if($_POST['user_appid']!=""){	 
-	  $user_info = getUserInfo($_POST['user_appid']);	  
-	  if (isset($user_info['response']['players'][0])){	  	  
-	    $steam_game_list = getSteamGames($_POST['user_appid']);	    
-	    $steam_friend_list = getFriendList($_POST['user_appid']);
+//$_POST['user_appid']="";
+//filter_var($_POST['user_appid'],FILTER_SANITIZE_NUMBER_INT);
+	if(isset($_POST['user_appid'])){
+  filter_var($_POST['user_appid'],FILTER_SANITIZE_NUMBER_INT);	 
+	  $user = new SteamApi($_POST['user_appid'], $steam_api_key);	
+    $userInfoRequest = $user -> createSteamUserInfoRequest();
+    $userInfoData = $user -> getResponse($userInfoRequest);    
+	  if (isset($userInfoData['response']['players'][0])){
+      $userGameRequest = $user -> createSteamUserGamesRequest();
+      $userGameData = $user -> getResponse($userGameRequest);	  	  
+	    //$steam_game_list = getSteamGames($_POST['user_appid']);
+      $userFriendRequest = $user -> createSteamUserFriendsRequest();
+      $userFriendsData = $user -> getResponse($userFriendRequest);
 
-	    $personaname  = $user_info['response']['players'][0]['personaname'];
-        $steamid      = $user_info['response']['players'][0]['steamid'];
-        $lastlogoff   = $user_info['response']['players'][0]['lastlogoff'];
-        $avatarmedium = $user_info['response']['players'][0]['avatarmedium'];
-        $timecreated  = $user_info['response']['players'][0]['timecreated'];
+
+	    //$steam_friend_list = getFriendList($_POST['user_appid']);
+
+	    $personaname  = $userInfoData['response']['players'][0]['personaname'];
+        $steamid      = $userInfoData['response']['players'][0]['steamid'];
+        $lastlogoff   = $userInfoData['response']['players'][0]['lastlogoff'];
+        $avatarmedium = $userInfoData['response']['players'][0]['avatarmedium'];
+        $timecreated  = $userInfoData['response']['players'][0]['timecreated'];
         $create_date  = date('Y.m.d', $timecreated);
 	  
-	    $friends_id   = $steam_friend_list['friendslist']['friends'][0]['steamid'];
-        $lista_lista  = $steam_friend_list['friendslist']['friends'];
+	    $friends_id   = $userFriendsData['friendslist']['friends'][0]['steamid'];
+        $lista_lista  = $userFriendsData['friendslist']['friends'];
 
         $friend_table ="<table class=\"table\">
         				  <thead class=\"thead-inverse\">
@@ -178,36 +193,8 @@ if (isset($_GET['action'])&& ($_GET['action']=="search")){
 
         // dodajemy eksport do pliku.
        
-
-$list = $steam_game_list['response']['games'];
-$fp = fopen('file.csv', 'w');
-
-foreach ($list as $fields) {
-    fputcsv($fp, $fields, ";");
-}
-
-fclose($fp);
-// zapis gier do pliku 
-$headers_list = $steam_game_list['response']['games'][0];
-
-$first_line = array_keys($headers_list);
-my_var_dump($first_line);
-
-// dodajemy naglowki
-$headersFile = fopen('proba.csv','w');
-fputcsv($headersFile,$first_line, ";");
-//doajemy tabele
-$list = $steam_game_list['response']['games'];
-//$fp = fopen('proba.csv', 'w');
-
-foreach ($list as $fields) {
-    fputcsv($headersFile, $fields, ";");
-}
-
-fclose($headersFile);
-
+        getGameListCsv($userGameData);
         $steam_user_games = createGamesListView($_POST['user_appid']); 
-
 if (isset($_GET['file'])) {
   //writecsv();
     // Wszystko co w tym bloku zostanie wyswietlone zostanie zapisane do pliku
@@ -218,7 +205,7 @@ if (isset($_GET['file'])) {
      <a href=\"?file=1\">Link</a>";
 }        
         echo <<<_END
-        <div class ="user_info_wrapper">
+        <div class ="userInfoData_wrapper">
         <h4>Informacje o użytkowniku</h4>
         <img src='$avatarmedium' />
         <p>Name: $personaname</p>
@@ -239,8 +226,8 @@ _END;
        }
        else{echo "Podano nieprawidlowy ID";}  
       }
-    else {echo "nie podano ID usera, prosze uzupelnic ";}
-} 
+    else {}
+ 
 
 echo <<<_END
     
