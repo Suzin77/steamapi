@@ -2,49 +2,9 @@
 require_once "steamkey.php";
 require_once "steam_class.php";
 
- function steamConnect ($url){
-
-  	$ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL,$url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    $output = curl_exec($ch);
-     if ($output === false)
-     { 
-       echo "Crul error: ".crul_error($ch);
-     } 
-     else{	
-       $data = json_decode($output,true);
-       curl_close ($ch);      
-       return $data;
-     }  
-  }
-
-
-function getSteamGames ($steam_user_id){
- 	global $steam_api_key;
- 	$get_games ="http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=".$steam_api_key."&format=json&input_json={\"steamid\":".$steam_user_id.",\"include_appinfo\":true,\"include_played_free_games\":false}"; 
- 	$get_games2 = "http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=".$steam_api_key."&steamids=".$steam_user_id; 		 	
- 	$game_data = steamConnect($get_games);
- 	return $game_data;   
- }
-
-function getUserInfo ($steam_user_id){
-    global $steam_api_key;
-	$userInfoRequest = "http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=".$steam_api_key."&steamids=".$steam_user_id."&format=json";
-	$user_info = steamConnect($userInfoRequest);		
-	return $user_info;  
-}
-
-
-function getFriendList ($steam_user_id){
-	global $steam_api_key;
-	$friend_list = "http://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key=".$steam_api_key."&steamid=".$steam_user_id."&relationship=friend";
-	$user_data = steamConnect($friend_list);	
-	return $user_data;
-}
-
 function getGameListCsv ($gamesList){
 // zapis gier do pliku 
+//dajemy nagówki  
 $headers_list = $gamesList['response']['games'][0];
 $first_line = array_keys($headers_list);
 
@@ -60,48 +20,6 @@ fclose($gamesFile);
 
 function getFriendsListView(){}
 
-function createGamesListView($steam_user_id){
-	$games_list = getSteamGames($steam_user_id);
-	
-	$response_games = $games_list['response']['games'];
-	
-    $appid = $response_games[0]['appid'];
-    $game_name = $games_list['response']['games'][0]['name'];
-	$img_logo_url = $games_list['response']['games'][0]['img_logo_url'];
-	$img_icon_url = $games_list['response']['games'][0]['img_icon_url'];
-	$playtime_forever = $games_list['response']['games'][0]['playtime_forever'];    
-    $lista_lista_gry  = $games_list['response']['games'];
-	$game_table ="<table class=\"table\">
-				    <thead class=\"thead-inverse\">
-        			   <tr>
-        			   	  <th> L. p.</th>
-        				  <th> Game Name</th> 
-        				  <th> Steam Game ID </th>
-        				  <th> Game logo </th>
-        				  <th> Cena </th>
-        			   </tr>
-        			</thead>";
-
-    $friend_steam_id ="";
-    foreach ($response_games as $key => $n){
-    	$lp = $key +1;        	
-    	$steam_app_id    = $response_games[$key]['appid'];
-    	$steam_app_shop_url = "http://store.steampowered.com/app/".$steam_app_id;
-    	$steam_app_name  = $response_games[$key]['name'];
-    	$steam_app_logo = $response_games[$key]['img_logo_url'];
-    	$steam_app_logo_url = "http://media.steampowered.com/steamcommunity/public/images/apps/".$steam_app_id."/".$steam_app_logo.".jpg";     	
-    	$game_table .= "<tr>
-    						<td>".$lp."</td>
-    						<td>".$steam_app_name."</td>
-    						<td>".$steam_app_id."</td>
-                            <td><img src=\"".$steam_app_logo_url."\" style=\"padding:1px\"/></td>
-                            <td><a href = \"".$steam_app_shop_url."\" target=\"_blank\">Link do strony</a></td>	                            
-    					  </tr>";	
-        }
-        $game_table .="</table>";
-        return $game_table;
-}
-//end of createGamesListView
 
 ?>
 <!DOCTYPE html>
@@ -114,60 +32,46 @@ function createGamesListView($steam_user_id){
 <body>
 <h1> Skrypt wyświetla informacje o uzytkowniku usługi STEAM.</h1>
   <p>Przydatne linki</p>
-  <p><a href="http://serwer1725317.home.pl/jakiemetody.php" target="_blank">Lista metod</a></p>
+  <p>Link do listy metod dostępnych w API Steam: <a href="http://serwer1725317.home.pl/jakiemetody.php" target="_blank">Lista metod</a></p>
   <p>przykaladowe ID 76561198014765204, 76561197970373921, 76561198002500907, 76561198008991804, 76561198018826719</p>	
 	<form action="steamapi.php" method="POST">
 	  <label>Please enter Steam user APP ID  </label><input type="text" name="user_appid"/>
 	    <input type="submit" name="search" value="szukaj"/>
 	</form>
-	<form action="?action=export" method="POST">
-	  <input type="submit" name="export" value="export do csv"/>
-	  <a href="#" class="btn btn-primary btn-primary"><span class="glyphicon glyphicon-floppy-disk"></span> Default text here</a>
-	  
-	</form>  
-	<button type="button" class="btn btn-default btn-lg">
-  <span class="glyphicon glyphicon-star" aria-hidden="true"></span> Star
-</button>
-	    
+
 <?php
 
 /*
-*
-*
-*
-*
-*
-*
  */
 
 //$_POST['user_appid']="";
 //filter_var($_POST['user_appid'],FILTER_SANITIZE_NUMBER_INT);
 	if(isset($_POST['user_appid'])){
-  filter_var($_POST['user_appid'],FILTER_SANITIZE_NUMBER_INT);	 
+    filter_var($_POST['user_appid'],FILTER_SANITIZE_NUMBER_INT);	 
 	  $user = new SteamApi($_POST['user_appid'], $steam_api_key);	
-    $userInfoRequest = $user -> createSteamUserInfoRequest();
-    $userInfoData = $user -> getResponse($userInfoRequest);    
-	  if (isset($userInfoData['response']['players'][0])){
+    $userInfo = $user -> getSteamUserInfo();        
+	  if (isset($userInfo['response']['players'][0])){
       $userGameRequest = $user -> createSteamUserGamesRequest();
-      $userGameData = $user -> getResponse($userGameRequest);	  	  
-	    //$steam_game_list = getSteamGames($_POST['user_appid']);
+      $userGameData = $user -> getResponse($userGameRequest);	  	  	    
       $userFriendRequest = $user -> createSteamUserFriendsRequest();
       $userFriendsData = $user -> getResponse($userFriendRequest);
 
-
-	    //$steam_friend_list = getFriendList($_POST['user_appid']);
-
-	    $personaname  = $userInfoData['response']['players'][0]['personaname'];
-        $steamid      = $userInfoData['response']['players'][0]['steamid'];
-        $lastlogoff   = $userInfoData['response']['players'][0]['lastlogoff'];
-        $avatarmedium = $userInfoData['response']['players'][0]['avatarmedium'];
-        $timecreated  = $userInfoData['response']['players'][0]['timecreated'];
-        $create_date  = date('Y.m.d', $timecreated);
+      $test = $user -> getSteamUserInfo();
+            
+      $tableTest = new GameTableRenderer($userGameData);
+      $gameTable = $tableTest -> CreateTable();
+      	    
+      $personaname  = $userInfo['response']['players'][0]['personaname'];
+      $steamid      = $userInfo['response']['players'][0]['steamid'];
+      $lastlogoff   = $userInfo['response']['players'][0]['lastlogoff'];
+      $avatarmedium = $userInfo['response']['players'][0]['avatarmedium'];
+      $timecreated  = $userInfo['response']['players'][0]['timecreated'];
+      $create_date  = date('Y.m.d', $timecreated);
 	  
 	    $friends_id   = $userFriendsData['friendslist']['friends'][0]['steamid'];
-        $lista_lista  = $userFriendsData['friendslist']['friends'];
+      $lista_lista  = $userFriendsData['friendslist']['friends'];
 
-        $friend_table ="<table class=\"table\">
+      $friend_table ="<table class=\"table\">
         				  <thead class=\"thead-inverse\">
         				   <tr>
         					 <th> Nick znajomego </th> 
@@ -176,25 +80,28 @@ function createGamesListView($steam_user_id){
         				    </tr>
         				   </thead>";
 
-        $friend_steam_id ="";
+      $friend_steam_id ="";
 
 
-        foreach ($lista_lista as $row => $m){
+      foreach ($lista_lista as $row => $m){
         	$friend_since    = $lista_lista[$row]['friend_since'];
         	$friend_steam_id = $lista_lista[$row]['steamid'];
-        	$friend_data = getUserInfo($friend_steam_id);
+          $friend = new SteamApi($friend_steam_id,$steam_api_key);
+          $firendReq = $friend -> createSteamUserInfoRequest();
+          $friendData = $friend -> getResponse($firendReq);
+        	//$friend_data = getUserInfo($friend_steam_id);
         	$friend_table .= "<tr>
-        						<td>".$friend_data['response']['players'][0]['personaname']."</td>
+        						<td>".$friendData['response']['players'][0]['personaname']."</td>
         						<td>".$friend_steam_id."</td>
 	                            <td>".date('Y.m.d', $friend_since)."</td>	                            
         					  </tr>";	
-        }
+      }
         $friend_table .="</table>";
 
         // dodajemy eksport do pliku.
        
         getGameListCsv($userGameData);
-        $steam_user_games = createGamesListView($_POST['user_appid']); 
+        
 if (isset($_GET['file'])) {
   //writecsv();
     // Wszystko co w tym bloku zostanie wyswietlone zostanie zapisane do pliku
@@ -206,23 +113,21 @@ if (isset($_GET['file'])) {
 }        
         echo <<<_END
         <div class ="userInfoData_wrapper">
-        <h4>Informacje o użytkowniku</h4>
-        <img src='$avatarmedium' />
-        <p>Name: $personaname</p>
-        <p>Steam ID: $steamid </p>
-        <p>On Steam since: $create_date</p>
+          <h4>Informacje o użytkowniku</h4>
+          <img src='$avatarmedium' />
+          <p>Name: $personaname</p>
+          <p>Steam ID: $steamid </p>
+          <p>On Steam since: $create_date</p>
+        </div>
         <p>Lista gier w CSV <a href="http://serwer1725317.home.pl/proba.csv" target="_blank">pobierz</a></p>
-        <a href="http://serwer1725317.home.pl/proba.csv" target="_blank">pobierz</a>
-
-        <a href="?file=1">Link</a>
+        <a href="http://serwer1725317.home.pl/proba.csv" target="_blank">pobierz</a>        
         <p>Znajomi:</p>
         $friend_table
         <p>Lista gier</p>
-        $steam_user_games
+        $gameTable
          
 _END;
-      
-         
+               
        }
        else{echo "Podano nieprawidlowy ID";}  
       }
