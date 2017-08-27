@@ -1,6 +1,7 @@
 <?php
 require_once "steamkey.php";
 require_once "steam_class.php";
+require_once "connectdbsteam.php";
 
 function getGameListCsv ($gamesList){
 // zapis gier do pliku 
@@ -8,20 +9,16 @@ function getGameListCsv ($gamesList){
 $headers_list = $gamesList['response']['games'][0];
 $first_line = array_keys($headers_list);
 
-$gamesFile = fopen('games.csv','w');
+$gamesFile = fopen('gamespat.csv','w');
 fputcsv($gamesFile,$first_line, ";");
 //doajemy tabele
 $list = $gamesList['response']['games'];
-foreach ($list as $fields) {
+foreach ($list as $fields) {    
     fputcsv($gamesFile, $fields, ";");
 }
 fclose($gamesFile);
 }
-
-function getFriendsListView(){}
-
-
-?>
+echo <<<_END
 <!DOCTYPE html>
 <html>
 <head>
@@ -38,9 +35,9 @@ function getFriendsListView(){}
 	  <label>Please enter Steam user APP ID  </label><input type="text" name="user_appid"/>
 	    <input type="submit" name="search" value="szukaj"/>
 	</form>
+_END;
 
-<?php
-
+$conn = new mysqli($host,$db_user,$db_pass,$db_name);
 /*
  */
 
@@ -48,28 +45,34 @@ function getFriendsListView(){}
 //filter_var($_POST['user_appid'],FILTER_SANITIZE_NUMBER_INT);
 	if(isset($_POST['user_appid'])){
     filter_var($_POST['user_appid'],FILTER_SANITIZE_NUMBER_INT);	 
-	  $user = new SteamApi($_POST['user_appid'], $steam_api_key);	
+	  $user = new SteamUserApi($_POST['user_appid'], $steam_api_key);	
     $userInfo = $user -> getSteamUserInfo();        
-	  if (isset($userInfo['response']['players'][0])){
-      $userGameRequest = $user -> createSteamUserGamesRequest();
-      $userGameData = $user -> getResponse($userGameRequest);	  	  	    
-      $userFriendRequest = $user -> createSteamUserFriendsRequest();
-      $userFriendsData = $user -> getResponse($userFriendRequest);
+	  if (isset($user -> steamId)){      
+      $userGameData = $user -> getSteamUserGames();
+      $gamesCheck = $userGameData['response']['game_count'];
+      my_var_dump($userInfo);
+      if ($gamesCheck != 0){
+        $tableTest = new GameTableRenderer($userGameData);
+        $gameTable = $tableTest -> CreateTable();
+      }	
+      $userFriendsData = $user -> getSteamUserFriends();
+      //$user -> setSteamUserInfo ();                       	    
+      $personaname  = $user -> personaname;
+      $steamid      = $user -> steamId;      
+      $avatarmedium = $user -> avatarmedium;
+      $create_date  = $user -> createDate;
 
-      $test = $user -> getSteamUserInfo();
-            
-      $tableTest = new GameTableRenderer($userGameData);
-      $gameTable = $tableTest -> CreateTable();
-      	    
-      $personaname  = $userInfo['response']['players'][0]['personaname'];
-      $steamid      = $userInfo['response']['players'][0]['steamid'];
-      $lastlogoff   = $userInfo['response']['players'][0]['lastlogoff'];
-      $avatarmedium = $userInfo['response']['players'][0]['avatarmedium'];
-      $timecreated  = $userInfo['response']['players'][0]['timecreated'];
-      $create_date  = date('Y.m.d', $timecreated);
-	  
 	    $friends_id   = $userFriendsData['friendslist']['friends'][0]['steamid'];
       $lista_lista  = $userFriendsData['friendslist']['friends'];
+
+    $userCheckReq = "SELECT 'user_id' FROM users WHERE user_id = '$steamid'";
+    $userValidation = $conn -> query($userCheckReq);
+    if ($userValidation -> num_rows == 0){
+        echo "Nie ma takiego usera zapisuje w bazie";
+        $newUser = "INSERT INTO users(user_id,personal_name,time_created)
+                    VALUES ('{$user -> steamId}','{$user -> personaname}','{$user -> timecreated}')";
+        $conn -> query($newUser);
+      }
 
       $friend_table ="<table class=\"table\">
         				  <thead class=\"thead-inverse\">
@@ -86,7 +89,7 @@ function getFriendsListView(){}
       foreach ($lista_lista as $row => $m){
         	$friend_since    = $lista_lista[$row]['friend_since'];
         	$friend_steam_id = $lista_lista[$row]['steamid'];
-          $friend = new SteamApi($friend_steam_id,$steam_api_key);
+          $friend = new SteamUserApi($friend_steam_id,$steam_api_key);
           $firendReq = $friend -> createSteamUserInfoRequest();
           $friendData = $friend -> getResponse($firendReq);
         	//$friend_data = getUserInfo($friend_steam_id);
@@ -99,7 +102,6 @@ function getFriendsListView(){}
         $friend_table .="</table>";
 
         // dodajemy eksport do pliku.
-       
         getGameListCsv($userGameData);
         
 if (isset($_GET['file'])) {
@@ -119,8 +121,8 @@ if (isset($_GET['file'])) {
           <p>Steam ID: $steamid </p>
           <p>On Steam since: $create_date</p>
         </div>
-        <p>Lista gier w CSV <a href="http://serwer1725317.home.pl/proba.csv" target="_blank">pobierz</a></p>
-        <a href="http://serwer1725317.home.pl/proba.csv" target="_blank">pobierz</a>        
+        <p>Lista gier w CSV <a href="games.csv" target="_blank">pobierz</a></p>
+            
         <p>Znajomi:</p>
         $friend_table
         <p>Lista gier</p>
@@ -129,11 +131,10 @@ if (isset($_GET['file'])) {
 _END;
                
        }
-       else{echo "Podano nieprawidlowy ID";}  
+       else{}  
       }
     else {}
  
-
 echo <<<_END
     
 </div>
