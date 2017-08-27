@@ -31,15 +31,31 @@ class PomiarCzasu{
 }//koniec klasy PomiarCzasu
 
 
-class SteamApi {
+class SteamUserApi {
    
 	private $steamUserId;
 	private $steamKey;	
 	private $gameData;
 
+	
+
 	function __construct ($steamUserId, $steamKey){
 		$this -> steamUserId = $steamUserId;
-		$this -> steamKey = $steamKey;		
+		$this -> steamKey = $steamKey;
+		//$this -> setSteamUserInfo();
+
+		if ($this -> idChecker($steamUserId)){
+		$userInfo = $this -> getSteamUserInfo();
+    	$this -> personaname = $userInfo['response']['players'][0]['personaname'];
+    	$this -> steamId = $userInfo['response']['players'][0]['steamid'];    	
+    	$this -> avatarmedium = $userInfo['response']['players'][0]['avatarmedium'];
+    	$this -> timecreated  = $userInfo['response']['players'][0]['timecreated'];
+    	$this -> createDate  = date('Y.m.d',$this -> timecreated);
+    	}else{
+    		echo "Podano niepoprawny Steam ID";
+    	}
+
+
 	} 
 
 	function getSteamUserGames(){
@@ -50,9 +66,49 @@ class SteamApi {
 
     function getSteamUserInfo(){
     	$request = $this -> createSteamUserInfoRequest();
-    	$response = $this -> getResponse($request);
+    	$response = $this -> getResponse($request);    	
     	return $response;
+    	/* struktura odpowiedzi
+    	array (
+  'response' => 
+  array (
+    'players' => 
+    array (
+      0 => 
+      array (
+        'steamid' => '76561198014765204',
+        'communityvisibilitystate' => 3,
+        'profilestate' => 1,
+        'personaname' => 'suzin77',
+        'lastlogoff' => 1503181345,
+        'commentpermission' => 1,
+        'profileurl' => 'http://steamcommunity.com/profiles/76561198014765204/',
+        'avatar' => 'https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/bb/bbe70c4fd7e03fbbe272d9a566ba887c0f0a36d3.jpg',
+        'avatarmedium' => 'https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/bb/bbe70c4fd7e03fbbe272d9a566ba887c0f0a36d3_medium.jpg',
+        'avatarfull' => 'https://steamcdn-a.akamaihd.net/steamcommunity/public/images/avatars/bb/bbe70c4fd7e03fbbe272d9a566ba887c0f0a36d3_full.jpg',
+        'personastate' => 1,
+        'realname' => 'Patryk Sos',
+        'primaryclanid' => '103582791433833633',
+        'timecreated' => 1256240246,
+        'personastateflags' => 0,        
+        'loccountrycode' => 'PL',
+        'locstatecode' => '62',
+      ),
+    ),
+  ),
+)
+    	*/
     } 
+
+    function setSteamUserInfo (){
+    	$userInfo = $this -> getSteamUserInfo();
+    	$this -> personaname = $userInfo['response']['players'][0]['personaname'];
+    	$this -> steamId = $userInfo['response']['players'][0]['steamid'];    	
+    	$this -> avatarmedium = $userInfo['response']['players'][0]['avatarmedium'];
+    	$this -> timecreated  = $userInfo['response']['players'][0]['timecreated'];
+    	$this -> createDate  = date('Y.m.d',$this -> timecreated);
+
+    }
 
     function getSteamUserFriends(){
     	$request = $this -> createSteamUserFriendsRequest();
@@ -61,7 +117,7 @@ class SteamApi {
 	}
 
     function getSteamUserName(){
-    	return $this->steamUserId;
+    	$name =  $this->getSteamUserInfo();
     }
 
     function createSteamUserGamesRequest(){
@@ -99,10 +155,21 @@ class SteamApi {
     }
 
     function closeSteamConnect(){}
+
+    function idChecker($steamId){
+    	$userInfo = $this -> getSteamUserInfo();
+    	$userId = @$userInfo['response']['players'][0]['steamid'];
+
+    	if ($steamId === $userId){
+    		return true;
+    	}
+    	return false;
+
+    }
    
 }//koniec klasy SteamApi
 
-class SteamConnect extends SteamApi  {
+class SteamConnect extends SteamUserApi  {
 
 		private $user_info_request;
 		private $steamKey;
