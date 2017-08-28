@@ -14,7 +14,7 @@ fputcsv($gamesFile,$first_line, ";");
 $list = $gamesList['response']['games'];
 foreach ($list as $fields) {    
     fputcsv($gamesFile, $fields, ";");
-}
+    }
 fclose($gamesFile);
 }
 echo <<<_END
@@ -39,35 +39,35 @@ _END;
 $conn = new mysqli($host,$db_user,$db_pass,$db_name);
 //$_POST['user_appid']="";
 //filter_var($_POST['user_appid'],FILTER_SANITIZE_NUMBER_INT);
-	if(isset($_POST['user_appid'])){
-    filter_var($_POST['user_appid'],FILTER_SANITIZE_NUMBER_INT);	 
-	  $user = new SteamUserApi($_POST['user_appid'], $steam_api_key);	
-    $userInfo = $user -> getSteamUserInfo();        
-	  if (isset($user -> steamId)){      
-      $userGameData = $user -> getSteamUserGames();
-      $gamesCheck = $userGameData['response']['game_count'];
-      //my_var_dump($userInfo);
-      if ($gamesCheck != 0){
-        $tableTest = new GameTableRenderer($userGameData);
-        $gameTable = $tableTest -> CreateTable();
-      }	
+  if(isset($_POST['user_appid'])){
+      filter_var($_POST['user_appid'],FILTER_SANITIZE_NUMBER_INT);	 
+      $user = new SteamUserApi($_POST['user_appid'], $steam_api_key);	
+      $userInfo = $user -> getSteamUserInfo();        
+      if (isset($user -> steamId)){      
+          $userGameData = $user -> getSteamUserGames();
+          $gamesCheck = $userGameData['response']['game_count'];
+          //my_var_dump($userInfo);
+          if ($gamesCheck != 0){
+              $tableTest = new GameTableRenderer($userGameData);
+              $gameTable = $tableTest -> CreateTable();
+          }	
       $userFriendsData = $user -> getSteamUserFriends();
       //$user -> setSteamUserInfo ();                       	    
       $personaname  = $user -> personaname;
       $steamid      = $user -> steamId;      
       $avatarmedium = $user -> avatarmedium;
       $create_date  = $user -> createDate;
-
-	    $friends_id   = $userFriendsData['friendslist']['friends'][0]['steamid'];
+	      
+      $friends_id   = $userFriendsData['friendslist']['friends'][0]['steamid'];
       $lista_lista  = $userFriendsData['friendslist']['friends'];
 
       $userCheckReq = "SELECT 'user_id' FROM users WHERE user_id = '$steamid'";
       $userValidation = $conn -> query($userCheckReq);
       if ($userValidation -> num_rows == 0){
-        echo "Nie ma takiego usera zapisuje w bazie";
-        $newUser = "INSERT INTO users(user_id,personal_name,time_created)
-                    VALUES ('{$user -> steamId}','{$user -> personaname}','{$user -> timecreated}')";
-        $conn -> query($newUser);
+          echo "Nie ma takiego usera zapisuje w bazie";
+          $newUser = "INSERT INTO users(user_id,personal_name,time_created)
+                      VALUES ('{$user -> steamId}','{$user -> personaname}','{$user -> timecreated}')";
+          $conn -> query($newUser);
       }
 
       $friend_table ="<table class=\"table\">
@@ -80,10 +80,9 @@ $conn = new mysqli($host,$db_user,$db_pass,$db_name);
         				   </thead>";
 
       $friend_steam_id ="";
-
       foreach ($lista_lista as $row => $m){
-        	$friend_since    = $lista_lista[$row]['friend_since'];
-        	$friend_steam_id = $lista_lista[$row]['steamid'];
+          $friend_since    = $lista_lista[$row]['friend_since'];
+          $friend_steam_id = $lista_lista[$row]['steamid'];
           $friend = new SteamUserApi($friend_steam_id,$steam_api_key);         
           $friendData = $friend -> getSteamUserInfo();        
         	$friend_table .= "<tr>
@@ -92,11 +91,11 @@ $conn = new mysqli($host,$db_user,$db_pass,$db_name);
 	                            <td>".date('Y.m.d', $friend_since)."</td>	                            
         					  </tr>";	
       }
-        $friend_table .="</table>";
-        // dodajemy eksport do pliku.
-        getGameListCsv($userGameData);
+      $friend_table .="</table>";
+      // dodajemy eksport do pliku.
+      getGameListCsv($userGameData);
                
-        echo <<<_END
+      echo <<<_END
         <div class ="userInfoData_wrapper">
           <h4>Informacje o użytkowniku</h4>
           <img src='$avatarmedium' />
