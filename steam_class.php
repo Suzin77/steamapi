@@ -6,31 +6,6 @@ function my_var_dump($var){
   	echo "<pre>".var_export($var,true)."</pre>";
   }
 
-class PomiarCzasu{
-	/* Do pomiarów wykonywania sie metod z api steam dal użytkowników z wieloma znajomymi ewentualnie sprawdzić microtime()
-	aktualnie nieużywana.
-	*/
-	public $timeStart;
-	public $timeStop;
-	public $timePass;
-
-	function pomiarStart(){
-		$timeStart = time();
-		return $timeStart;
-	}
-
-	function pomiarStop(){
-		$timeStop = time();
-		return $timeStop;
-	}
-
-	function timePass(){
-		$timePass =  $timeStop - $timeStart;
-		return $timePass;
-	}
-}//koniec klasy PomiarCzasu
-
-
 class SteamUserApi {
    
 	private $steamUserId;
@@ -100,6 +75,48 @@ class SteamUserApi {
     	*/
     } 
 
+ 	function getSteamUserFriends(){
+    	$request = $this -> createSteamUserFriendsRequest();
+    	$response = $this -> getResponse($request);
+    	return $response;
+
+    	/*
+		struktura odpowiedzi :
+		array (
+  'friendslist' => 
+  array (
+    'friends' => 
+    array (
+      0 => 
+      array (
+        'steamid' => '76561197976083738',
+        'relationship' => 'friend',
+        'friend_since' => 1261516327,
+      ),
+      1 => 
+      array (
+        'steamid' => '76561197989037112',
+        'relationship' => 'friend',
+        'friend_since' => 1324896738,
+      ),
+      2 => 
+      array (
+        'steamid' => '76561198012964228',
+        'relationship' => 'friend',
+        'friend_since' => 1263761162,
+      ),
+      3 => 
+      array (
+        'steamid' => '76561198018826719',
+        'relationship' => 'friend',
+        'friend_since' => 1266342889,
+      ),
+    ),
+  ),
+)
+    	*/
+	}
+
     function setSteamUserInfo (){
     	$userInfo = $this -> getSteamUserInfo();
     	$this -> personaname = $userInfo['response']['players'][0]['personaname'];
@@ -107,14 +124,9 @@ class SteamUserApi {
     	$this -> avatarmedium = $userInfo['response']['players'][0]['avatarmedium'];
     	$this -> timecreated  = $userInfo['response']['players'][0]['timecreated'];
     	$this -> createDate  = date('Y.m.d',$this -> timecreated);
-
     }
 
-    function getSteamUserFriends(){
-    	$request = $this -> createSteamUserFriendsRequest();
-    	$response = $this -> getResponse($request);
-    	return $response;
-	}
+
 
     function getSteamUserName(){
     	$name =  $this->getSteamUserInfo();
