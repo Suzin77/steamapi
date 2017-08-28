@@ -2,47 +2,42 @@
 require_once "steamkey.php"; // tutaj jest klucza do api 
 
 function my_var_dump($var){
-
-  	echo "<pre>".var_export($var,true)."</pre>";
-  }
+    echo "<pre>".var_export($var,true)."</pre>";
+}
 
 class SteamUserApi {
    
 	private $steamUserId;
 	private $steamKey;	
 	private $gameData;
-
 	
-
 	function __construct ($steamUserId, $steamKey){
 		$this -> steamUserId = $steamUserId;
 		$this -> steamKey = $steamKey;
 		//$this -> setSteamUserInfo();
-
 		if ($this -> idChecker($steamUserId)){
-		$userInfo = $this -> getSteamUserInfo();
-    	$this -> personaname = $userInfo['response']['players'][0]['personaname'];
-    	$this -> steamId = $userInfo['response']['players'][0]['steamid'];    	
-    	$this -> avatarmedium = $userInfo['response']['players'][0]['avatarmedium'];
-    	$this -> timecreated  = $userInfo['response']['players'][0]['timecreated'];
-    	$this -> createDate  = date('Y.m.d',$this -> timecreated);
-    	}else{
-    		echo "Podano niepoprawny Steam ID";
+		    $userInfo = $this -> getSteamUserInfo();
+    	            $this -> personaname = $userInfo['response']['players'][0]['personaname'];
+    	            $this -> steamId = $userInfo['response']['players'][0]['steamid'];    	
+    	            $this -> avatarmedium = $userInfo['response']['players'][0]['avatarmedium'];
+    	            $this -> timecreated  = $userInfo['response']['players'][0]['timecreated'];
+    	            $this -> createDate  = date('Y.m.d',$this -> timecreated);
     	}
-
-
+	else{
+    	    echo "Podano niepoprawny Steam ID";
+    	}
 	} 
 
 	function getSteamUserGames(){
-		$request = $this -> createSteamUserGamesRequest();
-		$response = $this -> getResponse($request);
-		return $response;
+	    $request = $this -> createSteamUserGamesRequest();
+	    $response = $this -> getResponse($request);
+	    return $response;
 	}
 
-    function getSteamUserInfo(){
-    	$request = $this -> createSteamUserInfoRequest();
-    	$response = $this -> getResponse($request);    	
-    	return $response;
+        function getSteamUserInfo(){
+    	    $request = $this -> createSteamUserInfoRequest();
+    	    $response = $this -> getResponse($request);    	
+    	    return $response;
     	/* struktura odpowiedzi
     	array (
   'response' => 
@@ -75,8 +70,8 @@ class SteamUserApi {
     	*/
     } 
 
- 	function getSteamUserFriends(){
-    	$request = $this -> createSteamUserFriendsRequest();
+    function getSteamUserFriends(){
+        $request = $this -> createSteamUserFriendsRequest();
     	$response = $this -> getResponse($request);
     	return $response;
 
@@ -134,36 +129,35 @@ class SteamUserApi {
 
     function createSteamUserGamesRequest(){
     	global $steam_api_key;
- 	    $steamGamesRequest ="http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=".$this -> steamKey."&format=json&input_json={\"steamid\":".$this -> steamUserId.",\"include_appinfo\":true,\"include_played_free_games\":false}";     		 		
- 	    return $steamGamesRequest;   
+ 	$steamGamesRequest ="http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=".$this -> steamKey."&format=json&input_json={\"steamid\":".$this -> steamUserId.",\"include_appinfo\":true,\"include_played_free_games\":false}";     		 		
+ 	return $steamGamesRequest;   
     }
 
     function createSteamUserInfoRequest(){
     	global $steam_api_key;
-	    $steamUserInfoRequest = "http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=".$this -> steamKey."&steamids=".$this -> steamUserId."&format=json";   		
-	    return $steamUserInfoRequest;
+	$steamUserInfoRequest = "http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=".$this -> steamKey."&steamids=".$this -> steamUserId."&format=json";   		
+	return $steamUserInfoRequest;
     }
 
     function createSteamUserFriendsRequest(){
     	global $steam_api_key;
 	$steamUserFriendsRequest = "http://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key=".$this -> steamKey."&steamid=".$this -> steamUserId."&relationship=friend";
-		return $steamUserFriendsRequest;
+	return $steamUserFriendsRequest;
     }
 
     function getResponse($url){
-	    $ch = curl_init();
-	    curl_setopt($ch, CURLOPT_URL,$url);
-	    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-	    $output = curl_exec($ch);
-	    if ($output === false)
-	     { 
-	       echo "Crul error: ".crul_error($ch);
-	     } 
-	     else{	
-	       $data = json_decode($output,true);
-	       curl_close ($ch);      
-	       return $data;
-	     }     	
+        $ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL,$url);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	$output = curl_exec($ch);
+	if ($output === false){ 
+	    echo "Crul error: ".crul_error($ch);
+	} 
+	else{	
+	   $data = json_decode($output,true);
+	   curl_close ($ch);      
+	   return $data;
+	}     	
     }
 
     function closeSteamConnect(){}
@@ -228,9 +222,9 @@ class GameTableRenderer {
         			</thead>";
 
 	function __construct ($gameList){
-		$this -> responseGames = $gameList['response']['games']; 
-		$this -> appId = $gameList['response']['games'][0]['appid'];
-		$this -> gameName = $gameList['response']['games'][0]['name'];
+	    $this -> responseGames = $gameList['response']['games']; 
+	    $this -> appId = $gameList['response']['games'][0]['appid'];
+	    $this -> gameName = $gameList['response']['games'][0]['name'];
 	    $this -> imgLogoUrl = $gameList['response']['games'][0]['img_logo_url'];
 	    $this -> imgIconUrl = $gameList['response']['games'][0]['img_icon_url'];
 	    $this -> PlaytimeForever = $gameList['response']['games'][0]['playtime_forever'];           
@@ -247,13 +241,13 @@ class GameTableRenderer {
 		$gameTable = $this -> tableHeader;
 
 		foreach ($this -> responseGames as $key => $n){
-			$lp = $key+1;
-			$steamAppId = $this -> responseGames[$key]['appid'];			
-    	    $steamAppShopUrl = "http://store.steampowered.com/app/".$steamAppId;
-    	    $steamAppName  = $this -> responseGames[$key]['name'];
-    	    $steamAppLogo = $this -> responseGames[$key]['img_logo_url'];
-    	    $steamAppLogoUrl = "http://media.steampowered.com/steamcommunity/public/images/apps/".$steamAppId."/".$steamAppLogo.".jpg";
-    	    $gameTable .="<tr>
+		    $lp = $key+1;
+	            $steamAppId = $this -> responseGames[$key]['appid'];			
+    	            $steamAppShopUrl = "http://store.steampowered.com/app/".$steamAppId;
+    	            $steamAppName  = $this -> responseGames[$key]['name'];
+    	            $steamAppLogo = $this -> responseGames[$key]['img_logo_url'];
+    	            $steamAppLogoUrl = "http://media.steampowered.com/steamcommunity/public/images/apps/".$steamAppId."/".$steamAppLogo.".jpg";
+    	            $gameTable .="<tr>
     						<td>".$lp."</td>
     						<td>".$steamAppName."</td>
     						<td>".$steamAppId."</td>
