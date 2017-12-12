@@ -5,6 +5,11 @@ function my_var_dump($var){
     echo "<pre>".var_export($var,true)."</pre>";
 }
 
+function suma($a,$b)
+{
+   return $a+$b;
+}
+
 class SteamUserApi {
    
 	private $steamUserId;
